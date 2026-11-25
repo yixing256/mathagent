@@ -1,0 +1,87 @@
+# .pre-commit-config.yaml — 复制到仓库根；首次执行 pre-commit install --install-hooks
+# 设计：全部使用 local 钩子（内网/国产化镜像可用），不硬编码任何外部仓库地址。
+# 依赖：钩子调用的工具必须在 dev 依赖内（见 dependency-whitelist.txt）。
+minimum_pre_commit_version: "3.7.0"
+default_stages: [pre-commit, commit-msg]
+default_install_hook_types: [pre-commit, commit-msg]
+fail_fast: false
+
+repos:
+  - repo: local
+    hooks:
+      # 1) 密钥扫描兜底（Critical）：必须先建基线 .secrets.baseline 并提交
+      - id: secret-scan
+        name: secret scan (detect-secrets baseline)
+        entry: detect-secrets-hook --baseline .secrets.baseline
+        language: system
+        types: [text]
+        exclude: ^(dist/|build/|\.venv/|\.secrets\.baseline$)
+
+      # 2) 自定义密钥正则兜底：常见 Key/Token 形态（实现见 scripts/hooks/secret_regex.py）
+      - id: secret-regex
+        name: secret regex guard
+        entry: python scripts/hooks/secret_regex.py
+        language: system
+        types: [text]
+        exclude: ^(dist/|build/|\.venv/)
+
+      # 3) 禁止的交付形态：onefile / UPX / console=True（实现见 scripts/hooks/spec_guard.py）
+      - id: spec-guard
+        name: packaging spec guard
+        entry: python scripts/hooks/spec_guard.py
+        language: system
+        files: ^packaging/.*\.spec$
+
+      # 4) 依赖白名单：禁止白名单外 import（实现见 scripts/hooks/whitelist_check.py）
+      - id: whitelist-check
+        name: dependency whitelist
+        entry: python scripts/hooks/whitelist_check.py
+        language: system
+        files: ^(pyproject\.toml|requirements.*\.txt|mathagent/.*\.py)$
+
+      # 5) 治理包守卫：docs/agents 与 AGENTS.md 只能由架构负责人改
+      - id: agents-pack-guard
+        name: agents pack guard
+        entry: python scripts/hooks/agents_pack_guard.py
+        language: system
+        files: ^(AGENTS\.md|docs/agents/|\.github/CODEOWNERS|\.pre-commit-config\.yaml)
+
+      # 6) 代码质量
+      - id: ruff
+        name: ruff check
+        entry: ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: ruff format
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy (strict)
+        entry: mypy mathagent
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      # 7) 快速单测（覆盖率门禁在 CI 跑全量，不在每次提交跑）
+      - id: pytest-fast
+        name: pytest (fast subset)
+        entry: pytest -q -m "not slow and not regression"
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      # 8) Conventional Commits 校验（commit-msg 阶段）
+      - id: conventional-commit
+        name: conventional commit message
+        entry: python scripts/hooks/commit_msg.py
+        language: system
+        stages: [commit-msg]
+        pass_filenames: true
+
+# 约定（钩子脚本由项目实现，接口固定，便于所有智能体一致调用）：
+#   secret_regex.py / spec_guard.py / whitelist_check.py / agents_pack_guard.py
+#     -> 参数：文件路径列表（可为空）；exit 0 通过，1 违规（打印 file:line 与原因）
+#   commit_msg.py -> 参数：提交信息文件路径；exit 1 表示格式不合规
+# ❌ 禁止：删除任一钩子、改 entry 绕开扫描、使用 --no-verify、放宽 .secrets.baseline 的判定

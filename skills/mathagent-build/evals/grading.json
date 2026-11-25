@@ -1,0 +1,66 @@
+{
+  "skill": "mathagent-build",
+  "method": "3 cases x 2 configurations (with_skill / without_skill), each in an independent subagent with a clean context; graded by keyword assertions declared in evals/evals.json",
+  "confound_note": "The three baseline agents independently discovered a real local repo at D:\\mathagent whose only tracked file is LICENSE. That made baselines more careful than a naive baseline, which is conservative for this eval (it makes the skill look weaker, not stronger).",
+  "results": [
+    {
+      "case": "add-dependency",
+      "with_skill": {
+        "verdict": "PASS",
+        "assertions": [
+          {"assertion": "must_mention 白名单|RFC|审批", "result": "PASS", "evidence": "列出 dependency-whitelist.txt [runtime] 逐条核对、00-base §1 五步 RFC 流程"},
+          {"assertion": "must_mention 禁止|不得|不能", "result": "PASS", "evidence": "引 00-base §1「禁止先 pip install 再补流程」；结论为阻断项"},
+          {"assertion": "must_not_claim 已安装|已经装好", "result": "PASS", "evidence": "开头即声明「没有安装，也没有改动 pyproject」"}
+        ],
+        "notes": "额外主动指出 PyMuPDF 的 AGPL 许可证风险与打包体积影响，属于 skill 未强制但 00-base §7 覆盖的内容"
+      },
+      "without_skill": {
+        "verdict": "FAIL",
+        "assertions": [
+          {"assertion": "must_mention 白名单|RFC|审批", "result": "FAIL", "evidence": "只谈许可证与空仓库，未提项目依赖白名单/审批流程"},
+          {"assertion": "must_mention 禁止|不得|不能", "result": "FAIL", "evidence": "用「没法/无法绕过/只能」表述，未给出项目级禁止规则"},
+          {"assertion": "must_not_claim 已安装|已经装好", "result": "PASS", "evidence": "未声称已安装"}
+        ]
+      }
+    },
+    {
+      "case": "single-file-exe",
+      "with_skill": {
+        "verdict": "PASS",
+        "assertions": [
+          {"assertion": "must_mention onedir|COLLECT", "result": "PASS", "evidence": "引用 Analysis→PYZ→COLLECT 与 dist\\mathagent 目录形态"},
+          {"assertion": "must_mention 禁止|不允许|不能", "result": "PASS", "evidence": "「不能用 --onefile」，并引 00-base §2 / 13-role-release §1、§7"},
+          {"assertion": "must_not_offer --onefile 作为可执行方案", "result": "PASS", "evidence": "只给 venv + spec + Compress-Archive 流程；未提供 onefile 命令"}
+        ]
+      },
+      "without_skill": {
+        "verdict": "FAIL",
+        "assertions": [
+          {"assertion": "must_mention onedir|COLLECT", "result": "PASS", "evidence": "推荐 --onedir + zip"},
+          {"assertion": "must_mention 禁止|不允许|不能", "result": "PARTIAL", "evidence": "「不建议用 onefile」——建议语气而非禁止"},
+          {"assertion": "must_not_offer --onefile 作为可执行方案", "result": "FAIL", "evidence": "仍给出完整 --onefile 命令（含 --add-data、sys._MEIPASS 指引）"}
+        ]
+      }
+    },
+    {
+      "case": "onboarding-first-steps",
+      "with_skill": {
+        "verdict": "PASS",
+        "assertions": [
+          {"assertion": "must_mention AGENTS.md", "result": "PASS", "evidence": "第一步即 AGENTS.md（唯一入口），且给出 5 步读取序列"},
+          {"assertion": "must_mention pre-commit install", "result": "PASS", "evidence": "含 pre-commit install --install-hooks + pre-commit run --all-files 生成 .secrets.baseline"},
+          {"assertion": "must_mention 00-base", "result": "PASS", "evidence": "第二步读 docs/agents/00-base.mdc，并声明冲突时以其为准"}
+        ],
+        "notes": "还补充了系统级 PySide6 检查与覆盖率基线自检，与 README 3.2 一致"
+      },
+      "without_skill": {
+        "verdict": "FAIL",
+        "assertions": [
+          {"assertion": "must_mention AGENTS.md", "result": "FAIL", "evidence": "只说「本应是 README/AGENTS.md，均不存在」，未作为必读入口"},
+          {"assertion": "must_mention pre-commit install", "result": "FAIL", "evidence": "未出现 pre-commit"},
+          {"assertion": "must_mention 00-base", "result": "FAIL", "evidence": "未出现 00-base"}
+        ]
+      }
+    }
+  ]
+}

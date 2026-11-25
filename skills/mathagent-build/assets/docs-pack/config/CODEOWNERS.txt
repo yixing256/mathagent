@@ -1,0 +1,25 @@
+# CODEOWNERS — 复制到 .github/CODEOWNERS
+# 规则：最后匹配的行生效。因此「治理文件」必须写在通配规则之后。
+# 团队名需在组织中真实存在且有写权限，否则不会自动请求评审。
+
+# 默认所有者（兜底）
+*                                 @mathagent-core
+
+# 治理文件：只有架构负责人可批（与 docs/agents/README.md 3.4 对应）
+/AGENTS.md                        @mathagent-core
+/docs/agents/                     @mathagent-core
+/.github/                         @mathagent-core
+/.pre-commit-config.yaml          @mathagent-core
+
+# 角色域：对应 docs/agents 的角色包
+/mathagent/app/                   @mathagent-ui
+/mathagent/viz/                   @mathagent-ui
+/resources/qss/                   @mathagent-ui
+/mathagent/core/                  @mathagent-core
+/mathagent/solvers/               @mathagent-core @mathagent-algo
+/mathagent/ai/                    @mathagent-ai
+/tests/regression/                @mathagent-core @mathagent-algo
+/packaging/                       @mathagent-release
+
+# CODEOWNERS 自身的所有者：防止被顺手改掉
+/.github/CODEOWNERS               @repo-owner

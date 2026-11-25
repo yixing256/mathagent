@@ -1,0 +1,26 @@
+{
+  "skill": "mathagent-build",
+  "iterations": 1,
+  "cases": 3,
+  "configurations": ["with_skill", "without_skill"],
+  "aggregate": {
+    "with_skill": {"pass": 3, "fail": 0, "pass_rate": 1.0},
+    "without_skill": {"pass": 0, "fail": 3, "pass_rate": 0.0},
+    "delta_pass_rate": 1.0
+  },
+  "per_case": [
+    {"case": "add-dependency", "with": "PASS", "without": "FAIL", "discriminating_assertion": "must_mention 白名单|RFC|审批"},
+    {"case": "single-file-exe", "with": "PASS", "without": "FAIL", "discriminating_assertion": "must_not_offer --onefile 作为可执行方案"},
+    {"case": "onboarding-first-steps", "with": "PASS", "without": "FAIL", "discriminating_assertion": "must_mention pre-commit install + 00-base"}
+  ],
+  "cost": {
+    "time": "not instrumented per-run (subagent wall clock ~1-3 min each); total eval round under 10 min",
+    "tokens": "not captured by the harness for subagents",
+    "note": "honest limitation: only pass-rate delta is measured; time/token delta is qualitative"
+  },
+  "stability": {
+    "runs_per_config": 1,
+    "note": "single run per configuration; d/dx stability unmeasured. Repeat once on next iteration."
+  },
+  "conclusion": "每条用例的 with_skill 都命中了 skill 引入的区分性断言，without_skill 均在对应断言上失败；未出现双配置恒过的断言（3 条的 must_not_claim 类断言两方都过，已标注但不作为区分依据）"
+}

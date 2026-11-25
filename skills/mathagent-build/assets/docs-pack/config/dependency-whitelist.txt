@@ -1,0 +1,51 @@
+# dependency-whitelist.txt — 依赖白名单 v1
+# 复制到 docs/agents/dependency-whitelist.txt（该文件受 ARCH 审批保护）
+# 规则：
+#   1) 仅允许纯 Python 或官方提供 win_amd64 wheel 的包；禁止需要本地编译工具链的包。
+#   2) 版本一律「>=下限,<上限」，禁止不设上限。
+#   3) 白名单外依赖 = 阻断：先提 RFC（用途/替代方案/包体影响/许可证），架构负责人批准后再加。
+#   4) 新增条目必须同时更新 pyproject.toml 与锁文件，并跑一次打包冒烟。
+
+[python]
+version = 3.11.x
+platform = win_amd64
+
+[runtime]
+PySide6>=6.7,<6.8
+numpy>=1.26,<2.1
+scipy>=1.11,<1.15
+pandas>=2.1,<2.3
+scikit-learn>=1.4,<1.6
+statsmodels>=0.14,<0.15
+ortools>=9.8,<9.12
+pyqtgraph>=0.13,<0.14
+matplotlib>=3.8,<3.10
+httpx>=0.27,<0.29
+pydantic>=2.7,<3
+python-dotenv>=1.0,<2
+keyring>=25,<26
+openpyxl>=3.1,<4
+python-docx>=1.1,<2
+
+[build]
+pyinstaller>=6.6,<6.12
+
+[dev]
+pytest>=8,<9
+pytest-cov>=5,<7
+pytest-qt>=4.4,<5
+ruff>=0.5,<0.8
+mypy>=1.10,<1.14
+types-requests
+pre-commit>=3.7,<5
+detect-secrets>=1.5,<2
+
+[watchlist]
+# 候选但 v1 不列入（未通过审核时禁止使用）：
+# - scikit-optimize(sko)：维护活跃度低、与 scikit-learn 版本耦合紧；先用 sklearn 内置搜索替代
+# - 任何 GUI 框架之外的 UI 运行时、任何浏览器内核绑定：与交付形态冲突
+# 复核时间：每两周复盘时重看一次（见 docs/agents/README.md 3.5）
+
+[forbidden-by-design]
+# 详见 docs/agents/00-base.mdc §1：本项目不允许出现编译型扩展、非 Python 的 UI 运行时、
+# 以及任何第三方模型网关作为运行时依赖。

@@ -1,0 +1,24 @@
+{
+  "skill": "mathagent-build",
+  "iteration": 1,
+  "reviewer": "self (unattended run; no human reviewer available)",
+  "blocking": [],
+  "nonblocking": [
+    {
+      "item": "4c 触发率未实测",
+      "detail": "description 只做了 8 条应触发查询的静态关键词覆盖（8/8）与 10 条近失配负例设计，未跑 20x3 次在线触发测频。",
+      "next": "下一轮由人工或 tester 在真实会话里跑 20 条查询，记录触发率后再决定是否收紧 description。"
+    },
+    {
+      "item": "config 片段引用的 scripts/hooks/*.py 不在包内",
+      "detail": "pre-commit 配置把密钥正则、spec 守卫、白名单检查、commit-msg 校验、治理包守卫交给目标仓库的 scripts/hooks/，包内只给接口契约（参数/退出码）。",
+      "next": "目标仓库落地首个 PR 时补齐这 5 个钩子脚本；若要复用，可作为独立技能包产出，避免本包超出'只写约束与配置片段'的范围。"
+    },
+    {
+      "item": "baseline 存在环境混淆",
+      "detail": "无技能基线在 D:\\mathagent 发现真实（近空）仓库，因而表现比常见基线更谨慎。",
+      "next": "在有完整代码的仓库里重跑一次 without_skill，确认 delta 仍成立。"
+    }
+  ],
+  "verdict": "通过（无阻断项）；建议在第二次迭代处理以上 3 条"
+}

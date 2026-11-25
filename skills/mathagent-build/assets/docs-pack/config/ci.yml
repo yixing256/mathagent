@@ -1,0 +1,132 @@
+# .github/workflows/ci.yml — 复制到目标仓库；GitLab/Gitee 迁移时保留同一命令序列
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: lint / type
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: ruff
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: mypy
+        run: mypy mathagent
+
+  test:
+    name: pytest + coverage gate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: tests (total coverage >= 80%)
+        run: pytest -q --cov=mathagent --cov-report=term-missing --cov-fail-under=80
+      - name: ai coverage (>= 90%)
+        run: pytest -q tests/ai tests/contract --cov=mathagent.ai --cov-fail-under=90
+      - name: solvers coverage (>= 90%)
+        run: pytest -q tests/solvers tests/regression --cov=mathagent.solvers --cov-fail-under=90
+      - name: upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: .coverage*
+
+  security:
+    name: secret scan / whitelist
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pre-commit detect-secrets
+      - name: pre-commit (all hooks)
+        run: pre-commit run --all-files --show-diff-on-failure
+      - name: detect-secrets
+        run: detect-secrets scan --baseline .secrets.baseline
+      - name: whitelist
+        run: python scripts/hooks/whitelist_check.py
+
+  agents-pack-guard:
+    name: docs/agents protection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: protected files need arch owner approval
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          echo "$changed"
+          echo "$changed" | grep -E '^(AGENTS\.md|docs/agents/|\.github/CODEOWNERS|\.pre-commit-config\.yaml|docs/agents/dependency-whitelist\.txt)' \
+            && echo "PROTECTED_CHANGED=1" >> "$GITHUB_ENV" || echo "PROTECTED_CHANGED=0" >> "$GITHUB_ENV"
+      - name: business code must not ride along
+        if: env.PROTECTED_CHANGED == '1'
+        run: |
+          changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          if echo "$changed" | grep -qE '^(mathagent/(app|solvers|core|ai)/)'; then
+            echo "::error::治理文件与业务代码不得在同一 PR 中修改（见 docs/agents/README.md 3.4）"
+            exit 1
+          fi
+
+  packaging:
+    name: onedir build smoke (main only)
+    runs-on: windows-latest
+    if: github.ref == 'refs/heads/main'
+    needs: [quality, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: build (onedir only)
+        run: pyinstaller --clean --noconfirm packaging/mathagent.spec
+      - name: assert onedir layout
+        run: |
+          if [ ! -d dist/mathagent/_internal ]; then echo "::error::onedir layout missing"; exit 1; fi
+          if [ -f dist/mathagent.exe ]; then echo "::error::检测到 onefile 产物——本项目禁止 onefile 形态，必须 onedir"; exit 1; fi
+      - name: launch smoke
+        run: |
+          python -c "import subprocess,sys,time; p=subprocess.Popen([r'dist\\mathagent\\mathagent.exe']); time.sleep(8); rc=p.poll(); p.terminate(); sys.exit(0 if rc is None else 1)"

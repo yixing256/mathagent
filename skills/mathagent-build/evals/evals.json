@@ -1,0 +1,103 @@
+{
+  "skill": "mathagent-build",
+  "kind": "instruction-pack",
+  "workdir": "skill root",
+  "notes": "只读/语法夹具：不联网、不写仓库、可重复执行；命令在 skill 根目录运行。每条都附 expected 与 observed（本轮真实执行结果）。",
+  "evals": [
+    {
+      "id": "E1-pack-integrity",
+      "prompt": "检查 mathagent-build 治理包是否完整合规（只读）：运行包自检器并报告结果。",
+      "expected_output": "自检器输出 status=pass、score=100.0，退出码 0，11 项检查全部 PASS。",
+      "command": "python scripts/check_docs_pack.py --kit assets/docs-pack --json",
+      "expected": { "exit_code": 0, "stdout_json": { "status": "pass", "score": 100.0 } },
+      "observed": { "exit_code": 0, "status": "pass", "score": 100.0, "checks": "11/11 PASS" },
+      "assertions": [
+        "exit_code == 0",
+        "json.status == 'pass' 且 json.score >= 95",
+        "json.violations 为空数组"
+      ]
+    },
+    {
+      "id": "E2-manifest-list",
+      "prompt": "列出治理包必须包含的 15 个文件清单（只读）。",
+      "expected_output": "stdout 恰好 15 行，首行为 AGENTS.md，包含 00-base.md 与 dependency-whitelist.txt。",
+      "command": "python scripts/check_docs_pack.py --kit assets/docs-pack --list",
+      "expected": { "exit_code": 0, "stdout_line_count": 15 },
+      "observed": { "exit_code": 0, "stdout_line_count": 15, "first_line": "AGENTS.md" },
+      "assertions": [
+        "exit_code == 0",
+        "stdout 行数 == 15",
+        "首行 == AGENTS.md"
+      ]
+    },
+    {
+      "id": "E3-missing-kit-exit2",
+      "prompt": "传入不存在的 kit 目录时，自检器应把用法错误和内容违规区分开（只读）。",
+      "expected_output": "退出码 2（不是 1），stderr 含 'kit directory not found'，stdout 为空。",
+      "command": "python scripts/check_docs_pack.py --kit ./no-such-dir",
+      "expected": { "exit_code": 2, "stderr_contains": "kit directory not found" },
+      "observed": { "exit_code": 2, "stderr": "error: kit directory not found: no-such-dir", "stdout": "" },
+      "assertions": [
+        "exit_code == 2",
+        "stderr 含 'kit directory not found'",
+        "stdout 为空"
+      ]
+    },
+    {
+      "id": "E4-help",
+      "prompt": "确认自检脚本可无人值守调用（--help 自描述，无交互输入）。",
+      "expected_output": "退出码 0，stdout 含 --kit 与退出码说明。",
+      "command": "python scripts/check_docs_pack.py --help",
+      "expected": { "exit_code": 0, "stdout_contains": "--kit" },
+      "observed": { "exit_code": 0, "stdout_contains": "--kit, --target, --list, --json, Exit codes" },
+      "assertions": [
+        "exit_code == 0",
+        "stdout 含 '--kit'",
+        "stdout 含 'Exit codes: 0 pass, 1 violations, 2 usage error.'"
+      ]
+    },
+    {
+      "id": "E5-syntax",
+      "prompt": "对自检脚本做语法校验（不产生字节码文件）。",
+      "expected_output": "ast.parse 通过，退出码 0，无 SyntaxError 输出，不生成 .pyc。",
+      "command": "python -c \"import ast,pathlib;ast.parse(pathlib.Path('scripts/check_docs_pack.py').read_text(encoding='utf-8'))\"",
+      "expected": { "exit_code": 0, "stderr": "" },
+      "observed": { "exit_code": 0, "created_pyc": false },
+      "assertions": [
+        "exit_code == 0",
+        "无 SyntaxError 输出",
+        "运行后包内无 __pycache__ / .pyc"
+      ]
+    }
+  ],
+  "behavioral_evidence": {
+    "file": "evals/grading.json",
+    "cases": ["add-dependency", "single-file-exe", "onboarding-first-steps"],
+    "method": "3 cases x with_skill / without_skill in isolated subagents; keyword assertions",
+    "result": "with_skill 3/3 PASS, without_skill 0/3 PASS"
+  },
+  "trigger_queries": {
+    "should_trigger": [
+      "给 mathagent 项目装一套 AI 开发规范",
+      "写一份 agents 约束给多智能体用",
+      "给这个 PySide6 项目生成 pre-commit / CI / CODEOWNERS",
+      "多人多智能体协作怎么约束 AI 写代码",
+      "set up project AI coding governance for a PySide6 desktop app",
+      "write AGENTS.md and role constraints for our coding agents",
+      "add AI coding red lines and review gates to this repo",
+      "dependency allowlist and onboarding docs for coding agents"
+    ],
+    "should_not_trigger": [
+      "帮我实现一个 PySide6 登录窗口",
+      "用 Vue 重写这个界面",
+      "把线性规划求解器代码写出来",
+      "怎么配置某个 CLI 的 API Key",
+      "分析这段 pandas 报错",
+      "帮我写一个 pytest 用例",
+      "PyInstaller onefile 怎么减小体积",
+      "生成一份数学建模论文的 LaTeX 模板",
+      "用 Rust 重写算法内核",
+      "解释 scipy.optimize.minimize 的参数"
+    ]
+  }
+}

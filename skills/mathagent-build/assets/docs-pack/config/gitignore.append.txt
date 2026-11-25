@@ -1,0 +1,46 @@
+# gitignore.append — 追加到仓库根 .gitignore（不要单独新建文件）
+# 目标：任何密钥/凭据/本地配置/构建产物都不进入版本库。
+
+# 环境与凭据
+.env
+.env/
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+secrets/
+config.local.ini
+config.local.*
+*.credential
+*.token
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# 打包与构建
+build/
+dist/
+*.spec.bak
+
+# 密钥扫描基线与本地数据
+.secrets.baseline.tmp
+data/local/
+logs/
+*.log
+
+# 编辑器与系统
+.idea/
+.vscode/
+Thumbs.db
+desktop.ini
