@@ -1,0 +1,40 @@
+# Local credentials and configuration
+.env
+.env/
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+secrets/
+config.local.ini
+config.local.*
+*.credential
+*.token
+
+# Python environments, checks and builds
+.venv/
+.venv-tools/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+*.spec.bak
+.secrets.baseline.tmp
+data/local/
+logs/
+*.log
+
+# Local editors and Windows
+.idea/
+.vscode/
+Thumbs.db
+desktop.ini

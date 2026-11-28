@@ -1,0 +1,1 @@
+"""Window-independent domain types."""
