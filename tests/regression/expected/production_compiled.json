@@ -1,0 +1,13 @@
+{
+  "case": "M09",
+  "variable_ids": ["甲", "乙"],
+  "constraint_ids": ["机时"],
+  "c": [-3, -2],
+  "A_ub": [[1, 1]],
+  "b_ub": [4],
+  "A_eq": null,
+  "b_eq": null,
+  "bounds": [[0, 2], [0, 3]],
+  "constant": 7,
+  "sign": -1
+}

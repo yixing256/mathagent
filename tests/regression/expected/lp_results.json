@@ -1,0 +1,12 @@
+{
+  "M01": {"status": "optimal", "objective": 10, "values": {"甲": 2, "乙": 2}, "machine_hours": 4},
+  "M02": {"status": "optimal", "objective": 8, "values": {"甲": 2, "乙": 1}, "machine_hours": 3},
+  "M03": {"status": "infeasible", "objective": null, "values": {}},
+  "M04": {"status": "unbounded", "objective": null, "values": {}},
+  "M05": {"status": "optimal", "objective": -2, "values": {"x": -2}},
+  "M06": {"status": "infeasible", "objective": null, "values": {}, "iterations": 0},
+  "M07": {"status": "invalid_input", "objective": null, "values": {}},
+  "M08": {"status": "optimal", "objective": 10, "values": {"甲": 2, "乙": 2}, "machine_hours": 4},
+  "M08b": {"status": "optimal", "objective": 8, "values": {"甲": 2, "乙": 1}, "machine_hours": 3},
+  "M09": {"status": "optimal", "objective": 17, "values": {"甲": 2, "乙": 2}, "machine_hours": 4}
+}

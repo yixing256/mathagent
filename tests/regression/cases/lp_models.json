@@ -1,0 +1,38 @@
+{
+  "production": {
+    "variables": [["甲", "批", 0, 2], ["乙", "批", 0, 3]],
+    "objective": [3, 2],
+    "objective_unit": "万元",
+    "direction": "max",
+    "constraints": [["机时", "<=", "小时"]],
+    "matrix": [[1, 1]],
+    "rhs": [4]
+  },
+  "single": {
+    "variables": [["x", "", 0, null]],
+    "objective": [1],
+    "objective_unit": "",
+    "direction": "max",
+    "constraints": [],
+    "matrix": [],
+    "rhs": []
+  },
+  "cases": {
+    "M01": {"model": "production"},
+    "M02": {"model": "production", "rhs": [3]},
+    "M03": {"model": "production", "rhs": [-1]},
+    "M04": {"model": "single"},
+    "M05": {"model": "single", "direction": "min", "variables": [["x", "", -2, 2]]},
+    "M06": {"model": "single", "direction": "min", "variables": [["x", "", 2, 1]]},
+    "M07": {"model": "production", "matrix": [[1, 1, 0]]},
+    "M08": {
+      "model": "production", "sparse": true,
+      "variables": [["乙", "批", 0, 3], ["甲", "批", 0, 2]], "objective": [2, 3]
+    },
+    "M08b": {
+      "model": "production", "sparse": true,
+      "variables": [["乙", "批", 0, 3], ["甲", "批", 0, 2]], "objective": [2, 3], "rhs": [3]
+    },
+    "M09": {"model": "production", "constant": 7}
+  }
+}
